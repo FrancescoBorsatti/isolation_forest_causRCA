@@ -103,24 +103,15 @@ def load_normal_records() -> list[dict]:
     return records
 
 
-#  Build X, y, root-cause matrix
+#  Build X, y dataset
 def build_matrices(fault_records, normal_records):
     all_records = fault_records + normal_records
 
     # feature matrix: rows = samples, cols = nodes, NaN → 0
     X = pd.DataFrame([r["snapshot"] for r in all_records]).fillna(0.0)
     y = np.array([r["label"] for r in all_records])
-    cols = list(X.columns)
 
-    # root-cause one-hot: only for fault samples (same row order as fault_records)
-    rc = pd.DataFrame(
-        [
-            {col: int(col in r["manipulated_vars"]) for col in cols}
-            for r in fault_records
-        ],
-        columns=cols,
-    )
-    return X, y, rc, all_records
+    return X, y
 
 
 #  Main
@@ -128,7 +119,7 @@ def main():
     fault_records = load_fault_records()
     normal_records = load_normal_records()
 
-    X, y, rc_full, _ = build_matrices(fault_records, normal_records)
+    X, y = build_matrices(fault_records, normal_records)
     print(
         f"Dataset: {X.shape[0]} samples, {X.shape[1]} features  "
         f"(fault={y.sum()}, normal={(y == 0).sum()})"
